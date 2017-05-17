@@ -6,6 +6,7 @@ void ScreenManager::run() {
     check_terminal_size();
     load_template();
 
+    attron(A_BOLD);
     print_at_pos(WEBSITE_POS, state->get_start_website().c_str());
     print_at_pos(MAX_LINKS_POS, state->get_max_links());
     print_at_pos(NUMBER_OF_WORKERS_POS, state->get_number_of_worker_threads());

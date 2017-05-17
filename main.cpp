@@ -1,6 +1,7 @@
 #include "gui/ScreenManager.h"
 #include "core/CrawlerState.h"
 #include "core/ThreadPool.h"
+#include "core/ConcurrentQueue.h"
 #include <thread>
 #include <iostream>
 
@@ -14,6 +15,7 @@ void increment_progress_bar(CrawlerState* state, int id, int batch_size) {
     state->update_worker_thread_progress(id, -1, batch_size);
 }
 
+
 int main(int argc, char* argv[]) {
     if(argc != 4) {
         printf("Usage ./%s start_website max_links number_of_worker_threads", argv[0]);
@@ -25,6 +27,7 @@ int main(int argc, char* argv[]) {
     int number_of_worker_threads = atoi(argv[3]);
 
     CrawlerState crawlerState(start_website, max_links, number_of_worker_threads);
+
     ScreenManager manager(&crawlerState);
     ThreadPool tp((size_t) number_of_worker_threads);
 
