@@ -12,7 +12,7 @@ void ScreenManager::run() {
     print_at_pos(NUMBER_OF_WORKERS_POS, state->get_number_of_worker_threads());
 
     while(state->is_new_data_available()) {
-        print_at_pos(CURRENT_LINKS_POS, state->get_current_links_count());
+        print_at_pos(CURRENT_LINKS_POS, state->get_processed_links_count());
         print_at_pos(PERCENTAL_PROGRESS_POS, state->get_current_progress());
 
         for (int i = 0; i < state->get_number_of_worker_threads(); ++i) {

@@ -22,7 +22,15 @@ private:
     void clear_progress_bar(Point position);
     void clear_worker_info(int i);
 
+    std::mutex mtx;
+
 public:
     ScreenManager(CrawlerState* _state) : state(_state) {}
     void run();
+
+    void print_msg(std::string msg) {
+        std::unique_lock<std::mutex> lk(mtx);
+        mvprintw(0, 0, msg.c_str());
+    }
+
 };
