@@ -27,6 +27,12 @@ void CrawlerState::update_total_scheduled_links_count_by(int delta) {
     total_scheduled_links_count += delta;
 }
 
+void CrawlerState::update_top_words(std::string word, int delta_count) {
+    std::unique_lock<std::mutex> lk(cv_mtx);
+    top_words[word] += delta_count;
+    cv.notify_one();
+}
+
 int CrawlerState::get_processed_links_count() {
     return processed_links_count;
 }
@@ -77,6 +83,32 @@ void CrawlerState::wait_for_finish() {
     std::unique_lock<std::mutex> lk(cv_mtx);
     cv.wait(lk, [this] { return is_done(); });
 }
+
+std::pair<std::string,int> CrawlerState::get_top_word(int rank) {
+    if(top_words.empty()) {
+        return std::make_pair(nullptr, -1);
+    }
+
+    std::vector<std::pair<std::string, int>> ranked_words;
+
+    for(auto it = top_words.begin(); it != top_words.end(); ++it) {
+        ranked_words.push_back(*it);
+    }
+
+    if(ranked_words.size() < rank) {
+        return std::make_pair(nullptr, -1);
+    }
+
+    std::sort(ranked_words.begin(), ranked_words.end(), [=](std::pair<std::string, int>& a, std::pair<std::string, int>& b) {
+        return a.second > b.second;
+    });
+
+    return ranked_words[rank];
+}
+
+
+
+
 
 
 

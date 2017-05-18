@@ -19,6 +19,10 @@ void ScreenManager::run() {
             print_worker_info(i);
         }
 
+        for(int i = 0; i < TOP_WORDS_COUNT; ++i) {
+            print_top_word_info(i);
+        }
+
         refresh();
 
         if(state->is_done()) {
@@ -115,8 +119,20 @@ void ScreenManager::clear_worker_info(int i) {
     clear_progress_bar(GENERIC_WORKER_THREAD_PROGRESS_POS.move(i, 0));
 }
 
+void ScreenManager::print_top_word_info(int i) {
+    std::pair<std::string, int> word = state->get_top_word(i);
 
+    if(word.second == -1) {
+        return;
+    }
 
+    char BUF[200];
+
+    sprintf(BUF, "%s (%d)", word.first.c_str(), word.second);
+
+    print_at_pos(GENERIC_TOP_WORD_TXT_POS.move(i, 0), "                     ");
+    print_at_pos(GENERIC_TOP_WORD_TXT_POS.move(i, 0), BUF);
+}
 
 
 

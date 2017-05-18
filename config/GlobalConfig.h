@@ -23,5 +23,6 @@ namespace GuiConstants {
     const int PROGRESS_BAR_LENGTH = 73;
 
     /* RESULTS CONSTANTS */
+    const int TOP_WORDS_COUNT = 10;
     const Point GENERIC_TOP_WORD_TXT_POS = Point(12, 7);
 }

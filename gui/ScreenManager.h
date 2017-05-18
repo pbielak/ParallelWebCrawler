@@ -22,6 +22,8 @@ private:
     void clear_progress_bar(Point position);
     void clear_worker_info(int i);
 
+    void print_top_word_info(int i);
+
 public:
     ScreenManager(CrawlerState* _state) : state(_state) {}
     void run();
