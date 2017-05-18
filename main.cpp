@@ -8,53 +8,57 @@
 #include "net/Parser.h"
 #include "net/WebsiteDownloader.h"
 
-//void increment_progress_bar(CrawlerState* state, int id, int batch_size) {
-//    for(int i = 0; i <= batch_size; i++) {
-//        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-//        state->update_worker_thread_progress(id, i, batch_size);
-//    }
-//
-//    state->update_processed_links_count_by(batch_size);
-//    state->update_worker_thread_progress(id, -1, batch_size);
-//}
+void worker_process(int id, CrawlerState* state, ConcurrentQueue<std::set<std::string>>* batch_queue) {
+    while(!state->is_done()) {
+        std::set<std::string> batch = batch_queue->pop();
+        int counter = 0;
 
-/*void worker_process(int id, CrawlerState* state, ConcurrentQueue<std::set<std::string>>* batch_queue) {
-    std::set<std::string> batch = batch_queue->pop();
-    int counter = 0;
+        for (auto it = batch.begin(); it != batch.end(); ++it) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            printf("[%d] Processing %s\n", id, (*it).c_str());
 
-    for(auto it = batch.begin(); it != batch.end(); ++it) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        std::string website_data = WebsiteDownloader::get_website(*it);
+            std::string website_data = WebsiteDownloader::get_website(*it);
 
-        std::set<std::string> new_batch = Parser::parse_links(website_data);
+            if (state->get_total_scheduled_links_count() == state->get_max_links()) {
+                // Only count words! No batch scheduling.
+            }
+            else {
+                std::set<std::string> new_batch = Parser::parse_links(website_data);
 
-        if(state->get_total_scheduled_links_count() + new_batch.size() > state->get_max_links()) {
-            int max_elements = state->get_max_links() - state->get_total_scheduled_links_count();
-            assert(max_elements >= 0);
-            std::set<std::string> trimmed_new_batch(new_batch.begin(), std::next(new_batch.begin(), max_elements));
-            batch_queue->push(trimmed_new_batch);
-            state->update_total_scheduled_links_count_by((int) trimmed_new_batch.size());
+                printf("[%d] Got a batch of size = %d\n", id, (int) new_batch.size());
+
+                if (state->get_total_scheduled_links_count() + new_batch.size() > state->get_max_links()) {
+                    int max_elements = state->get_max_links() - state->get_total_scheduled_links_count();
+                    assert(max_elements >= 0);
+                    std::set<std::string> trimmed_new_batch(new_batch.begin(),
+                                                            std::next(new_batch.begin(), max_elements));
+                    batch_queue->push(trimmed_new_batch);
+                    state->update_total_scheduled_links_count_by((int) trimmed_new_batch.size());
+
+                    printf("[%d] Nope it must be trimmed: %d\n", id, (int) trimmed_new_batch.size());
+                }
+                else {
+                    batch_queue->push(new_batch);
+                    state->update_total_scheduled_links_count_by((int) new_batch.size());
+                }
+            }
+
+            counter++;
+            state->update_worker_thread_progress(id, counter, (int) batch.size());
+            state->update_processed_links_count_by(1);
         }
-        else {
-            batch_queue->push(new_batch);
-            state->update_total_scheduled_links_count_by((int) new_batch.size());
-        }
 
-        counter++;
-        state->update_worker_thread_progress(id, counter, (int) batch.size());
-        state->update_processed_links_count_by(1);
+        state->update_worker_thread_progress(id, -1, (int) batch.size());
     }
-
-    state->update_worker_thread_progress(id, -1, (int) batch.size());
 }
 
 void batch_manager(ThreadPool* pool, CrawlerState* state, ConcurrentQueue<std::set<std::string>>* queue) {
-    while(!state->is_done()) {
-        for (int i = 0; i < state->get_number_of_worker_threads(); i++) {
-            pool->enqueue([i, &state, &queue]() { worker_process(i, state, queue); });
-        }
+    for (int i = 0; i < state->get_number_of_worker_threads(); i++) {
+        pool->enqueue(worker_process, i, state, queue);
     }
-}*/
+
+    state->wait_for_finish();
+}
 
 
 
@@ -73,7 +77,7 @@ int main(int argc, char* argv[]) {
     CrawlerState* crawlerState = new CrawlerState(start_website, max_links, number_of_worker_threads);
 
     ScreenManager* screenManager = new ScreenManager(crawlerState);
-    ThreadPool* threadPool = new ThreadPool((size_t) number_of_worker_threads);
+    ThreadPool* threadPool = new ThreadPool(number_of_worker_threads);
     ConcurrentQueue<std::set<std::string>>* batch_queue = new ConcurrentQueue<std::set<std::string>>();
 
 
@@ -96,6 +100,23 @@ int main(int argc, char* argv[]) {
     curl_global_cleanup();*/
 
 
+    const int MAX_LINKS = 50;
+    const int WORKERS_SIZE = 1;
+    const std::string start_url = "https://en.wikipedia.org/wiki/Shortest_path_problem";
+    curl_global_init(CURL_GLOBAL_ALL);
 
+    ConcurrentQueue<std::set<std::string>>* url_queue = new ConcurrentQueue<std::set<std::string>>();
+    CrawlerState* state = new CrawlerState(start_url, MAX_LINKS, WORKERS_SIZE);
+    ThreadPool* pool = new ThreadPool(WORKERS_SIZE);
+
+    std::set<std::string> initial_batch; initial_batch.insert(start_url);
+    url_queue->push(initial_batch);
+
+    batch_manager(pool, state, url_queue);
+
+    delete url_queue;
+    delete state;
+    delete pool;
+    curl_global_cleanup();
     return 0;
 }

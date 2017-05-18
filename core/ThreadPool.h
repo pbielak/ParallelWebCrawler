@@ -35,7 +35,7 @@ class ThreadPool {
 
 public:
     ThreadPool(size_t);
-    template<typename F> void enqueue(F f);
+    template<class Task, class ...Args> void enqueue(Task&& task, Args&& ...args);
     ~ThreadPool();
 
     ThreadPool(const ThreadPool&) = delete;
@@ -64,11 +64,13 @@ ThreadPool::~ThreadPool() {
     for(auto& t : workers) t.join();
 }
 
-template<typename F>
-void ThreadPool::enqueue(F f) {
+template<class Task, class ...Args>
+void ThreadPool::enqueue(Task&& task, Args&& ... args) {
     {
         std::unique_lock<std::mutex> lk(mtx);
-        tasks.push_back(std::function<void()>(f));
+        if(!terminate.load()) {
+            tasks.push_back(std::bind(task, std::forward<Args>(args)...));
+        }
     }
 
     cv.notify_one();

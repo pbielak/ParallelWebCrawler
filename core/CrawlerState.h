@@ -38,4 +38,6 @@ public:
 
     bool is_new_data_available();
     bool is_done();
+
+    void wait_for_finish();
 };

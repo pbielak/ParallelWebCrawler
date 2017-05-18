@@ -73,6 +73,13 @@ int CrawlerState::get_total_scheduled_links_count() {
     return total_scheduled_links_count;
 }
 
+void CrawlerState::wait_for_finish() {
+    std::unique_lock<std::mutex> lk(cv_mtx);
+    cv.wait(lk, [this] { return is_done(); });
+}
+
+
+
 
 
 
