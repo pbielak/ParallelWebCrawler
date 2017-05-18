@@ -26,7 +26,7 @@ void ScreenManager::run() {
         }
     }
 
-    getch();
+    while(getch() != 'q');
     endwin();
 }
 
@@ -75,6 +75,7 @@ void ScreenManager::load_template() {
 }
 
 void ScreenManager::print_at_pos(Point position, int value) {
+    if(value == -1) return;
     char BUF[100];
     sprintf(BUF, "%d", value);
     print_at_pos(position, BUF);

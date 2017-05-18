@@ -7,7 +7,7 @@ CrawlerState::CrawlerState(std::string _start_website,
                                                              max_links(_max_links),
                                                              start_website(_start_website),
                                                              number_of_worker_threads(_number_of_worker_threads) {
-    worker_states.resize((unsigned long) number_of_worker_threads, std::make_pair(0, std::numeric_limits<int>::max()));
+    worker_states.resize((unsigned long) number_of_worker_threads, std::make_pair(-1, -1));
 }
 
 void CrawlerState::update_processed_links_count_by(int delta) {
