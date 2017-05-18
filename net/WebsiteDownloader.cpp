@@ -1,12 +1,26 @@
 #include "WebsiteDownloader.h"
 
-size_t WebsiteDownloader::write_function(void* ptr, size_t size, size_t nmemb, void* data) {
-    std::string* str = (std::string*) data;
-    char* sptr = (char*) ptr;
-
-    for(int i = 0; i < size * nmemb; ++i) {
-        (*str) += sptr[i];
+size_t WebsiteDownloader::write_function(void* contents, size_t size, size_t nmemb, std::string* s/*void* data*/) {
+//    std::string* str = (std::string*) data;
+//    char* sptr = (char*) ptr;
+//
+//    for(int i = 0; i < size * nmemb; ++i) {
+//        (*str) += sptr[i];
+//    }
+    size_t newLength = size*nmemb;
+    size_t oldLength = s->size();
+    try
+    {
+        s->resize(oldLength + newLength);
     }
+    catch(std::bad_alloc &e)
+    {
+        //handle memory problem
+        return 0;
+    }
+
+    std::copy((char*)contents,(char*)contents+newLength,s->begin()+oldLength);
+
 
     return size * nmemb;
 }
